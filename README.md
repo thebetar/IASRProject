@@ -12,12 +12,13 @@ Commit linting is done with Husky.js to install project properly run `npm instal
 
 | Task                      | Deadline   | Done |
 | ------------------------- | ---------- | ---- |
-| Gather data               | 2023-12-01 | []   |
-| Rerecord over and times   | 2023-12-01 | []   |
-| Normalise data            | 2023-12-10 | []   |
-| Train 1st model           | 2023-12-10 | []   |
-| Refine model              | 2023-12-13 | []   |
-| Improve accuracy (medium) | 2023-12-24 | []   |
-| Create frontend           | 2023-01-07 | []   |
-| Optimise accuracy         | 2024-01-14 | []   |
-| Write report              | 2024-01-21 | []   |
+| Gather data               | 2023-12-01 | [ ]  |
+| Re-record over and times  | 2023-12-01 | [ ]  |
+| Normalise data            | 2023-12-10 | [ ]  |
+| Analyse data              | 2023-12-10 | [ ]  |
+| Train 1st model           | 2023-12-10 | [ ]  |
+| Refine model              | 2023-12-13 | [ ]  |
+| Improve accuracy (medium) | 2023-12-24 | [ ]  |
+| Create frontend           | 2023-01-07 | [ ]  |
+| Optimise accuracy         | 2024-01-14 | [ ]  |
+| Write report              | 2024-01-21 | [ ]  |
