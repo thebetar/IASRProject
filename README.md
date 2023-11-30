@@ -7,3 +7,15 @@ This project will use python with the following libraries
 -   Pytorch
 
 Commit linting is done with Husky.js to install project properly run `npm install`
+
+## Planning
+
+| Task                      | Deadline   | Done |
+| ------------------------- | ---------- | ---- |
+| Gather data               | 2023-12-01 | []   |
+| Normalise data            | 2023-12-10 | []   |
+| Train 1st model           | 2023-12-10 | []   |
+| Refine model              | 2023-12-13 | []   |
+| Improve accuracy (medium) | 2023-12-24 | []   |
+| Optimise accuracy         | 2024-01-14 | []   |
+| Write report              | 2024-01-21 | []   |
