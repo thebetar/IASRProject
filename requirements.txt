@@ -2,6 +2,7 @@
 librosa==0.10.1
 noisereduce==3.0.0
 ipykernel==6.27.1
+sounddevice==0.4.6
 --index-url https://download.pytorch.org/whl/cu118
 torch 
 torchvision 
