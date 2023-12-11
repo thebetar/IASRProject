@@ -7,4 +7,5 @@ sounddevice==0.4.6
 torch 
 torchvision 
 torchaudio 
+tqdm
 
