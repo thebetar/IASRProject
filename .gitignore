@@ -1,3 +1,4 @@
 node_modules
 
-backend/input/input.wav
+model/input/input.wav
+model/src/tmp/*
