@@ -173,11 +173,52 @@ def classify_audio(filepath):
 
     return labels[classification]
 
+def label_to_char(label):
+    if label == "one":
+        return "1"
+    elif label == "two":
+        return "2"
+    elif label == "three":
+        return "3"
+    elif label == "four":
+        return "4"
+    elif label == "five":
+        return "5"
+    elif label == "six":
+        return "6"
+    elif label == "seven":
+        return "7"
+    elif label == "eight":
+        return "8"
+    elif label == "nine":
+        return "9"
+    elif label == "zero":
+        return "0"
+    elif label == "plus":
+        return "+"
+    elif label == "minus":
+        return "-"
+    elif label == "times":
+        return "*"
+    elif label == "multiply":
+        return "*"
+    elif label == "divide":
+        return "/"
+    elif label == "over":
+        return "/"
+
 def calculate_from_audio(filepath):
     filepaths = break_audio(filepath)
     results = []
+    calculation_str = ""
 
     for filepath in filepaths:
         results.append(classify_audio(filepath))
 
-    return results
+    for result in results:
+        if(len(calculation_str) == 0):
+            calculation_str = label_to_char(result)
+        else:
+            calculation_str = calculation_str + " " + label_to_char(result)
+
+    return "{} = {}".format(calculation_str, eval(calculation_str))
