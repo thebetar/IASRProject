@@ -1,4 +1,5 @@
-from flask import Flask
+from flask import Flask, request
+from services.calculator import *
 
 app = Flask(__name__)
 
@@ -8,6 +9,16 @@ def calculate():
 
 @app.post('/calculate')
 def calculate():
+    file = request.files['file']
+
+    if file == None:
+        return {
+            'message': 'Not a valid file',
+            'answer': None
+        }
+    
+    answer = calculator.calculate_from_audio(file)
+
     return {
-        'result': '1 + 1 = 2'
+        'answer': answer
     }
