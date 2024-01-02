@@ -3,6 +3,7 @@ import os
 import librosa
 import numpy as np
 from scipy.signal import argrelextrema
+from scipy.io import wavfile 
 
 import torch
 import torch.nn as nn
@@ -87,7 +88,8 @@ def get_1d_features(y, sr = 8000, wanted_width = 5):
     tone_vs_noise = librosa.feature.spectral_flatness(y=y, n_fft=1024, hop_length=windows_size)[0]
 
 #Load whole set
-labels, X_2d_train, X_2d_test, X_1d_train,  X_1d_test, y_train,y_test = np.load("training_data.npz", allow_pickle=True).values()
+training_data_filepath = os.path.join(os.path.dirname(__file__), 'training_data.npz')
+labels, X_2d_train, X_2d_test, X_1d_train,  X_1d_test, y_train,y_test = np.load(training_data_filepath, allow_pickle=True).values()
 
 # Define the missing variables
 height = 40
@@ -136,8 +138,10 @@ else:
 os.environ['CUDA_VISIBLE_DEVICES']='2, 3'
 
 # Run the model over reduced data
+model_filepath = os.path.join(os.path.dirname(__file__), 'model.pth')
+
 net = Net().to(device)
-net.load_state_dict(torch.load('model.pth'))
+net.load_state_dict(torch.load(model_filepath))
 net.eval()
 
 def break_audio(filepath):
@@ -145,14 +149,15 @@ def break_audio(filepath):
 
     clip, sr = librosa.load(filepath)
 
-    chunk_duration = 2
+    chunk_duration = 3
     chunk_length = sr * chunk_duration
 
     chunks = [clip[i:i + chunk_length] for i in range(0, len(clip), chunk_length)]
 
     for i, chunk in enumerate(chunks):
-        librosa.output.write_wav(f"chunk{i}.wav", chunk, sr)
-        filepaths.append(f"chunk{i}.wav")
+        filename = os.path.join(os.path.dirname(__file__), '..', 'tmp', f"chunk{i}.wav")
+        wavfile.write(filename, sr, chunk)
+        filepaths.append(filename)
 
     return filepaths
 
@@ -207,6 +212,15 @@ def label_to_char(label):
     elif label == "over":
         return "/"
 
+OPERATORS = [
+    "plus",
+    "minus",
+    "times",
+    "multiply",
+    "divide",
+    "over"
+]
+
 def calculate_from_audio(filepath):
     filepaths = break_audio(filepath)
     results = []
@@ -216,9 +230,13 @@ def calculate_from_audio(filepath):
         results.append(classify_audio(filepath))
 
     for result in results:
-        if(len(calculation_str) == 0):
-            calculation_str = label_to_char(result)
+        if result in OPERATORS:
+            calculation_str = calculation_str + ' ' + label_to_char(result)
         else:
-            calculation_str = calculation_str + " " + label_to_char(result)
+            calculation_str = calculation_str + label_to_char(result)
+        
+
+    print(calculation_str)
+    print(eval(calculation_str))
 
     return "{} = {}".format(calculation_str, eval(calculation_str))

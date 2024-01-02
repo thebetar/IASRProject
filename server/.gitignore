@@ -1,4 +1,7 @@
 .venv/lib
+.venv/share
+
+src/tmp/*
 
 __pycache__
 __pycache__/*

@@ -1,23 +1,33 @@
+import os
 from flask import Flask, request
-from services.calculator import *
+from services.calculator import calculate_from_audio
 
 app = Flask(__name__)
 
 @app.route('/')
-def calculate():
+def test():
     return 'Server is running'
 
 @app.post('/calculate')
 def calculate():
+    if 'file' not in request.files:
+        return {
+            'message': 'No file part',
+            'answer': None
+        }
+
     file = request.files['file']
 
-    if file == None:
+    if file.filename == '':
         return {
-            'message': 'Not a valid file',
+            'message': 'No file selected',
             'answer': None
         }
     
-    answer = calculator.calculate_from_audio(file)
+    filename = os.path.join(os.path.dirname(__file__), 'tmp', 'temp.wav')
+    file.save(filename)
+    
+    answer = calculate_from_audio(filename)
 
     return {
         'answer': answer
