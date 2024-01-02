@@ -222,21 +222,26 @@ OPERATORS = [
 ]
 
 def calculate_from_audio(filepath):
-    filepaths = break_audio(filepath)
-    results = []
-    calculation_str = ""
+    try:
+        filepaths = break_audio(filepath)
+        results = []
+        calculation_str = ""
 
-    for filepath in filepaths:
-        results.append(classify_audio(filepath))
+        for filepath in filepaths:
+            results.append(classify_audio(filepath))
 
-    for result in results:
-        if result in OPERATORS:
-            calculation_str = calculation_str + ' ' + label_to_char(result)
-        else:
-            calculation_str = calculation_str + label_to_char(result)
-        
+        for result in results:
+            if result in OPERATORS:
+                calculation_str = calculation_str + ' ' + label_to_char(result)
+            else:
+                calculation_str = calculation_str + label_to_char(result)
 
-    print(calculation_str)
-    print(eval(calculation_str))
+        try:
+            print(calculation_str)
+            print(eval(calculation_str))
 
-    return "{} = {}".format(calculation_str, eval(calculation_str))
+            return "{} = {}".format(calculation_str, eval(calculation_str))
+        except:
+            return "EvalError: {}".format(calculation_str)
+    except:
+        return "Error"
