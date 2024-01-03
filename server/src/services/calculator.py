@@ -134,7 +134,7 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
     print("CPU")
-    
+
 os.environ['CUDA_VISIBLE_DEVICES']='2, 3'
 
 # Run the model over reduced data
