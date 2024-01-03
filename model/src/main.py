@@ -98,7 +98,6 @@ def get_1d_features(y, sr = 8000, wanted_width = 5):
 #Load whole set
 labels, X_2d_train, X_2d_test, X_1d_train,  X_1d_test, y_train,y_test = np.load("training_data.npz", allow_pickle=True).values()
 
-# Define the missing variables
 height = 40
 width = 40
 number_of_linear_values = 15
@@ -110,31 +109,34 @@ class Net(nn.Module):
         self.conv1 = nn.Conv2d(1, 8, 7)
         self.conv2 = nn.Conv2d(8, 16, 5)
         self.conv3 = nn.Conv2d(16, 32, 3)
+        self.conv3_bn = nn.BatchNorm2d(32)
 
-        x = torch.randn(height, width).view(-1,1,height, width)
+        x = torch.randn(height,width).view(-1,1,height,width)
         self._to_linear = None
         self.convs(x)
 
-        self.fc1 = nn.Linear(self._to_linear, 256)
+        self.fc1 = nn.Linear(self._to_linear + number_of_linear_values, 256)
+        self.fc1_bn = nn.BatchNorm1d(256)
         self.fc2 = nn.Linear(256, number_of_classes) # Adjusted to match the number of classes
 
     def convs(self, x):
-        x = F.max_pool2d(F.leaky_relu(self.conv1(x)), (2, 2))
+        x = F.max_pool2d(F.leaky_relu(self.conv1(x)), (2,2))
         x = F.max_pool2d(F.leaky_relu(self.conv2(x)), (2, 2))
-        x = F.max_pool2d(F.leaky_relu(self.conv3(x)), (2, 2))
+        x = F.max_pool2d(F.leaky_relu(self.conv3_bn(self.conv3(x))), (2, 2))
 
         if self._to_linear is None:
             self._to_linear = x[0].shape[0]*x[0].shape[1]*x[0].shape[2]
         return x
 
-    def forward(self, x):
-        x = self.convs(x)
+    def forward(self, data_2d, data_1d):
+        data_2d = self.convs(data_2d)
         #now new data is added to linear layers
-        x = x.view(-1, self._to_linear)
-        x = F.leaky_relu(self.fc1(x))
+        data_2d = data_2d.view(-1, self._to_linear)
+        x = torch.cat((data_2d , data_1d), dim=1)
+        x = F.leaky_relu(self.fc1_bn(self.fc1(x)))
         x = self.fc2(x)
         return F.softmax(x, dim=1)
-
+    
 if torch.cuda.is_available():
     device = torch.device("cuda:0")
     print("GPU")
@@ -173,10 +175,11 @@ def classify_audio(filepath):
     clip = librosa.util.normalize(clip)
     clip = get_voiced_parts(clip,8000)
     clip = add_preemphasis_filter(clip)
-    features = get_2d_features(clip, 8000)
-    features = torch.Tensor(features).view(-1,1,height,width)
-    features = features.to(device)
-    out = net(features)
+    features_2d = get_2d_features(clip, 8000)
+    features_2d = torch.Tensor(features_2d).view(-1,1,height,width).to(device)
+    features_1d = torch.Tensor(get_1d_features(clip, 8000))
+    features_1d = torch.unsqueeze(features_1d, dim = 0).to(device) #change the shape of the tensor
+    out = net(features_2d, features_1d)
     classification = torch.argmax(out)
     print(labels[classification])
 
