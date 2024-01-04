@@ -39,7 +39,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   String _result = '';
   String _spokenText = '';
   bool _isFirstPress = true;
-  bool _isMicHighlighted = true;
+  bool _isMicHighlighted = false;
+  bool _isCalculationInProgress = false;
 
   @override
   void initState() {
@@ -102,13 +103,12 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       actions: {
         ActivateIntent: CallbackAction(
           onInvoke: (e) {
-            print('Space pressed');
             if (_isFirstPress) {
               _speechUtils.startRecording();
               _isMicHighlighted = true;
             } else {
               _speechUtils.stopRecording();
-              _isMicHighlighted = false;
+              _isCalculationInProgress = true;
             }
             _isFirstPress = !_isFirstPress;
             setState(() {});
@@ -136,8 +136,13 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                   onPressed: () {
                     _speechUtils.startRecording();
                   },
-                  backgroundColor:
-                      _isMicHighlighted ? Colors.blue : Colors.grey,
+                  backgroundColor: Colors.blue,
+                  shape: _isMicHighlighted 
+                    ? const RoundedRectangleBorder(
+                      side: BorderSide(
+                        color: Colors.red,
+                         width: 3)) 
+                    : null,
                   child: const Icon(Icons.mic),
                 ),
                 const SizedBox(height: 10),
@@ -217,11 +222,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     _speechUtils.stopRecording();
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        _isMicHighlighted ? Colors.grey : Colors.blue,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 50, vertical: 20),
+                    primary: Colors.blue,
+                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
                     textStyle: const TextStyle(fontSize: 20),
+                    side: _isCalculationInProgress ? const BorderSide(color: Colors.red, width: 3) : BorderSide.none,
                   ),
                   child: const Text('Calculate'),
                 ),
