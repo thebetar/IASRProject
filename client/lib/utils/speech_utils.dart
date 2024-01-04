@@ -24,7 +24,7 @@ class SpeechUtils {
       _countDownText = '$_start';
       _timer = Timer.periodic(const Duration(seconds: 1), (Timer timer) async {
         if (_start == 0) {
-          _countDownText = 'Listning...';
+          _countDownText = 'Listening...';
           timer.cancel();
 
           html.MediaStream stream = await html.window.navigator.mediaDevices!.getUserMedia({'audio': true});

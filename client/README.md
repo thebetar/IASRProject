@@ -42,6 +42,7 @@ flutter build web --release #for Web
 - User-friendly interface
 - Communication with a backend server for processing voice commands
 - Progress indicators for each part of the calculation (first number, operation, second number)
+- We can control the recording and calulate button through 'Space' key.
 
 
 ## Contributing
