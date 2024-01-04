@@ -41,6 +41,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   bool _isFirstPress = true;
   bool _isMicHighlighted = false;
   bool _isCalculationInProgress = false;
+  bool _isCalculateClicked = false;
 
   @override
   void initState() {
@@ -104,11 +105,15 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         ActivateIntent: CallbackAction(
           onInvoke: (e) {
             if (_isFirstPress) {
-              _speechUtils.startRecording();
               _isMicHighlighted = true;
+              _isCalculationInProgress = false;
+              _isCalculateClicked = false;
+              _speechUtils.startRecording();
             } else {
-              _speechUtils.stopRecording();
+              _isMicHighlighted = false;
               _isCalculationInProgress = true;
+              _isCalculateClicked = true;
+              _speechUtils.stopRecording();
             }
             _isFirstPress = !_isFirstPress;
             setState(() {});
@@ -209,10 +214,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                   ],
                 ),
                 const SizedBox(height: 20),
-                Text(
+                if(_isCalculateClicked)
+                  Text(
                   _spokenText.isEmpty
-                      ? 'Your response is not processed yet'
-                      : 'You said: $_spokenText', //TODO: Need to implement after API integration
+                      ? 'Nothing was said' //TODO: Need to implement after valida api response
+                      : 'You said: $_spokenText',
                   style: const TextStyle(fontSize: 24),
                   textAlign: TextAlign.center,
                 ),
