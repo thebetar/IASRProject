@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:voice_calculator_flutter/utils/speech_utils.dart';
-import 'api/api_client.dart';
-
+import 'utils/speech_utils.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -16,9 +14,8 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Voice Calculator',
       theme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
         primarySwatch: Colors.blue,
+        brightness: Brightness.dark,
       ),
       home: const MyHomePage(),
     );
@@ -26,14 +23,17 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+  const MyHomePage({Key? key}) : super(key: key);
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  late SpeechUtils _speechUtils;
+class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
+  late final AnimationController _progressControllerBlue;
+  late final AnimationController _progressControllerRed;
+  late final AnimationController _progressControllerPurple;
+  late final SpeechUtils _speechUtils;
   String _countDownText = '';
   String _result = '';
   String _spokenText = '';
@@ -41,42 +41,54 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    _speechUtils = SpeechUtils(ApiClient());
-  }
-
-  void _startTimer() {
-    _speechUtils.startTimer(() {
-      setState(() {
-        _listen();
+    _progressControllerBlue = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    )..addListener(() {
+        setState(() {});
       });
-    }, (countDownText) {
-      setState(() {
-        _countDownText = countDownText;
+    _progressControllerRed = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    )..addListener(() {
+        setState(() {});
       });
-    });
-  }
-
-  void _listen() {
-    _speechUtils.listen((spokenText) {
-      setState(() {
-        _spokenText = spokenText;
+    _progressControllerPurple = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    )..addListener(() {
+        setState(() {});
       });
-    });
-  }
-
-  void _calculate() {
-    _speechUtils.calculate((result) {
-      setState(() {
-        _result = result;
-      });
-    });
+    _speechUtils = SpeechUtils(
+      updateCountDown: (countDownText) {
+        setState(() {
+          _countDownText = countDownText;
+        });
+      },
+      updateResult: (result) {
+        setState(() {
+          _result = result;
+        });
+      },
+      startAnimation: () async {
+        _progressControllerBlue.reset();
+        await _progressControllerBlue.forward();
+        _progressControllerRed.reset();
+        await _progressControllerRed.forward();
+        _progressControllerPurple.reset();
+        await _progressControllerPurple.forward();
+      },
+    );
   }
 
   @override
   void dispose() {
-    _speechUtils.dispose();
+    _progressControllerBlue.dispose();
+    _progressControllerRed.dispose();
+    _progressControllerPurple.dispose();
     super.dispose();
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -98,32 +110,85 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               const SizedBox(height: 30),
               FloatingActionButton(
-                onPressed: _startTimer,
+                onPressed: () {
+                  _speechUtils.startRecording();
+                },
                 backgroundColor: Colors.blue,
                 child: const Icon(Icons.mic),
               ),
               const SizedBox(height: 10),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                transitionBuilder: (Widget child, Animation<double> animation) {
-                  return ScaleTransition(scale: animation, child: child);
-                },
-                child: Text(
-                  _countDownText,
-                  key: ValueKey<String>(_countDownText),
-                  style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
+              Text(
+                _countDownText,
+                style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        LinearProgressIndicator(
+                          value: _progressControllerBlue.value,
+                          color: Colors.blue,
+                          backgroundColor: Colors.blue.shade100,
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.all(5.0),
+                          child: Center(
+                            child: Text('First number'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        LinearProgressIndicator(
+                          value: _progressControllerRed.value,
+                          color: Colors.red,
+                          backgroundColor: Colors.red.shade100,
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.all(5.0),
+                          child: Center(
+                            child: Text('Symbol'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        LinearProgressIndicator(
+                          value: _progressControllerPurple.value,
+                          color: Colors.purple,
+                          backgroundColor: Colors.purple.shade100,
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.all(5.0),
+                          child: Center(
+                            child: Text('Last number'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 20),
               Text(
-                _spokenText.isEmpty ? 'You have not said anything yet' : 'You said: $_spokenText',
+                _spokenText.isEmpty ? 'Your response is not processed yet' : 'You said: $_spokenText', //TODO: Need to implement after API integration
                 style: const TextStyle(fontSize: 24),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 30),
               ElevatedButton(
-                onPressed: _calculate,
+                onPressed: (){
+                  _speechUtils.stopRecording();
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
@@ -132,14 +197,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: const Text('Calculate'),
               ),
               const SizedBox(height: 30),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 500),
-                child: Text(
-                  'Result: $_result',
-                  key: ValueKey<String>(_result),
-                  style: const TextStyle(fontSize: 24),
-                  textAlign: TextAlign.center,
-                ),
+              Text(
+                'Result: $_result',
+                style: const TextStyle(fontSize: 24),
+                textAlign: TextAlign.center,
               ),
             ],
           ),

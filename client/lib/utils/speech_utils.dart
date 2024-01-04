@@ -1,89 +1,76 @@
-import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'dart:async';
+import 'dart:html' as html;
 import '../api/api_client.dart';
 
 class SpeechUtils {
-  late stt.SpeechToText _speech;
-  String _spokenText = '';
+  final Function(String) updateCountDown;
+  final Function(String) updateResult;
+  final Function startAnimation;
   String _countDownText = '';
-  Timer? _timer;
+  html.MediaRecorder? _mediaRecorder;
+  List<html.Blob> _audioChunks = [];
+  bool _isRecording = false;
   int _start = 5;
+  Timer? _timer;
+  late final ApiClient _apiClient;
 
-  final ApiClient _apiClient;
-
-  SpeechUtils(this._apiClient) {
-    _speech = stt.SpeechToText();
-    _initializeSpeech();
+  SpeechUtils({required this.updateCountDown, required this.updateResult, required this.startAnimation}) {
+    _apiClient = ApiClient(updateResult);
   }
 
-  void _initializeSpeech() async {
-    bool isAvailable = await _speech.initialize();
-    if (!isAvailable) {
-      // Handle speech initialization failure
-      print('Speech initialization failed.'); // Todo: remove this line after testing
-      // You can display an error message or take appropriate action
-    }
-  }
-
-  void _reset() {
-    _spokenText = '';
-  }
-
-  void startTimer(void Function() onListen, void Function(String countDownText) onCountDown) {
-    if (_speech.isListening) {
-      _speech.stop();
-      _reset();
-      return;
-    }
-    _reset();
-    _countDownText = '5';
-    _start = 5;
-    _timer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
-      if (_start == 0) {
-        _countDownText = 'Go!';
-        timer.cancel();
-        onListen();
-      } else {
-        _countDownText = '$_start';
-        _start--;
-      }
-      onCountDown(_countDownText);
-    });
-  }
-
-  void listen(void Function(String spokenText) onResult) {
-    if (_speech.isListening) {
-      _speech.stop();
-    }
-    _speech.listen(onResult: (val) {
-      _spokenText = val.recognizedWords;
-      _countDownText = '';
-      _start = 3;
-      onResult(_spokenText);
-    });
-  }
-
-  void stopListening() {
-    if (_speech.isListening) {
-      _speech.stop();
-    }
-  }
-
-  void calculate(void Function(String result) onCalculate) async {
-    if (_speech.isListening) {
-      _speech.stop();
-    }
+  Future<void> startRecording() async {
     try {
-      final result = await _apiClient.calculate(_spokenText);
-      onCalculate(result);
+      _start = 5;
+      _countDownText = '$_start';
+      _timer = Timer.periodic(const Duration(seconds: 1), (Timer timer) async {
+        if (_start == 0) {
+          _countDownText = 'Listning...';
+          timer.cancel();
+
+          html.MediaStream stream = await html.window.navigator.mediaDevices!.getUserMedia({'audio': true});
+          _mediaRecorder = html.MediaRecorder(stream);
+          _mediaRecorder!.start();
+
+          Timer.run(() {
+            startAnimation(); // Start the animation
+          });
+
+          _mediaRecorder!.addEventListener('dataavailable', (html.Event event) {
+            print('Data available event fired');
+            if ((event as html.BlobEvent).data != null) {
+              _audioChunks.add((event as html.BlobEvent).data!);
+            }
+          });
+
+          _isRecording = true;
+        } else {
+          _start--;
+          _countDownText = '$_start';
+        }
+        updateCountDown(_countDownText);
+      });
     } catch (e) {
-      // Handle API call error
-      print('API call failed: $e'); // Todo: remove this line after testing
-      // You can display an error message or take appropriate action
+      print('Failed to start recording: $e');
     }
   }
 
-  void dispose() {
-    _timer?.cancel(); // Make sure to cancel the timer when the utility is disposed
+  Future<void> stopRecording() async {
+    try {
+      _mediaRecorder!.addEventListener('stop', (html.Event event) {
+        print('Recording stopped');
+
+        print('Number of audio chunks: ${_audioChunks.length}');
+
+        html.Blob audioBlob = html.Blob(_audioChunks, 'audio/wav');
+
+        _apiClient.sendAudioToServer(audioBlob);
+
+        _isRecording = false;
+      });
+
+      _mediaRecorder!.stop();
+    } catch (e) {
+      print('Failed to stop recording: $e'); //TODO: Remove this line after debugging
+    }
   }
 }

@@ -1,34 +1,45 @@
-import os
 from flask import Flask, request
+from flask_cors import CORS
+from datetime import datetime
 from services.calculator import calculate_from_audio
+import os
 
 app = Flask(__name__)
+CORS(app)
 
-@app.route('/')
-def test():
+@app.route('/', methods=['GET'])
+def home():
     return 'Server is running'
 
-@app.post('/calculate')
+@app.route('/calculate', methods=['POST'])
 def calculate():
-    if 'file' not in request.files:
-        return {
-            'message': 'No file part',
-            'answer': None
-        }
-
+    print(request.files)
     file = request.files['file']
+    if file:
+        # Generate a unique filename using the current timestamp
+        filename = 'audio_' + datetime.now().strftime('%Y%m%d_%H%M%S') + '.wav'
+        
+        # Directory where we want to save the files
+        directory = 'uploads'
+        
+        # Check if the directory exists, and if not, create it
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        
+        # Save the file in the directory
+        file.save(os.path.join(directory, filename))
+        print(f'File {filename} saved successfully')
 
-    if file.filename == '':
+        answer = calculate_from_audio(os.path.join(directory, filename))
+
         return {
-            'message': 'No file selected',
-            'answer': None
+            'answer': answer
         }
-    
-    filename = os.path.join(os.path.dirname(__file__), 'tmp', 'temp.wav')
-    file.save(filename)
-    
-    answer = calculate_from_audio(filename)
+    else:
+        return {
+            'message': 'No file uploaded',
+            'answer': None
+        }, 400
 
-    return {
-        'answer': answer
-    }
+if __name__ == '__main__':
+    app.run(debug=True, use_reloader=False)

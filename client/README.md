@@ -15,7 +15,7 @@ git clone https://github.com/adityadelhi/voice_calculator.git
 Then, navigate to the project directory and install the dependencies:
 
 ```bash
-cd voice_calculator_flutter\.
+cd client
 flutter pub get
 ```
 
@@ -41,6 +41,8 @@ flutter build web --release #for Web
 - Voice input for mathematical calculations
 - User-friendly interface
 - Communication with a backend server for processing voice commands
+- Progress indicators for each part of the calculation (first number, operation, second number)
+
 
 ## Contributing
 

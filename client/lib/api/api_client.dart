@@ -1,22 +1,30 @@
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'dart:html' as html;
 
 class ApiClient {
-  Future<String> calculate(String mathExpression) async {
-    final response = await http.post(
-      Uri.parse('http://localhost:5000/calculate'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, String>{
-        'mathExpression': mathExpression,
-      }),
-    );
+  final Function(String) updateResult;
 
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body)['result'].toString();
-    } else {
-      throw Exception('Failed to calculate');
+  ApiClient(this.updateResult);
+
+  void sendAudioToServer(html.Blob audioBlob) {
+    try {
+      var formData = html.FormData();
+      formData.appendBlob('file', audioBlob);
+
+      var request = html.HttpRequest();
+      request.open('POST', 'http://localhost:5000/calculate');
+      request.send(formData);
+
+      request.onLoadEnd.listen((event) {
+        if (request.status == 200) {
+          print('Audio sent successfully');
+          String serverResponse = request.responseText!;
+          updateResult(serverResponse);
+        } else {
+          print('Failed to send audio: ${request.statusText}');
+        }
+      });
+    } catch (e) {
+      print('Failed to send audio: $e'); //TODO: Remove this line after debugging
     }
   }
 }
