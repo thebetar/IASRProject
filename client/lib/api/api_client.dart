@@ -1,4 +1,5 @@
 import 'dart:html' as html;
+import 'dart:convert' as convert;
 
 class ApiClient {
   final Function(String) updateResult;
@@ -18,7 +19,9 @@ class ApiClient {
         if (request.status == 200) {
           print('Audio sent successfully');
           String serverResponse = request.responseText!;
-          updateResult(serverResponse);
+          var jsonResponse = convert.jsonDecode(serverResponse);
+          String result = jsonResponse['answer']; // Extract the "answer" field
+          updateResult(result);
         } else {
           print('Failed to send audio: ${request.statusText}');
         }

@@ -2,6 +2,7 @@
 .venv/share
 
 src/tmp/*
+client/uploads/*
 
 __pycache__
 __pycache__/*

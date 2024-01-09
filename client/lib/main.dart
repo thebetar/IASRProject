@@ -77,11 +77,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       },
       startAnimation: () async {
         _progressControllerBlue.reset();
-        await _progressControllerBlue.forward();
-        _progressControllerRed.reset();
-        await _progressControllerRed.forward();
-        _progressControllerPurple.reset();
-        await _progressControllerPurple.forward();
+        _progressControllerBlue.repeat();
       },
     );
   }
@@ -107,13 +103,12 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             if (_isFirstPress) {
               _isMicHighlighted = true;
               _isCalculationInProgress = false;
-              _isCalculateClicked = false;
               _speechUtils.startRecording();
             } else {
               _isMicHighlighted = false;
               _isCalculationInProgress = true;
-              _isCalculateClicked = true;
               _speechUtils.stopRecording();
+              _progressControllerBlue.stop();
             }
             _isFirstPress = !_isFirstPress;
             setState(() {});
@@ -132,13 +127,16 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 const Text(
-                  'Tap on the mic and say a math expression',
+                  "Tap on the mic and say a math expression\n Or just press the 'Space' key",
                   style: TextStyle(fontSize: 16),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 30),
                 FloatingActionButton(
                   onPressed: () {
+                    setState(() {
+                      _result = '';
+                    });
                     _speechUtils.startRecording();
                   },
                   backgroundColor: Colors.blue,
@@ -158,86 +156,51 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          LinearProgressIndicator(
-                            value: _progressControllerBlue.value,
-                            color: Colors.blue,
-                            backgroundColor: Colors.blue.shade100,
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.all(5.0),
-                            child: Center(
-                              child: Text('First number'),
-                            ),
-                          ),
-                        ],
+                Expanded(
+                  child: Stack(
+                    children: [
+                      LinearProgressIndicator(
+                        value: _progressControllerBlue.value,
+                        color: Colors.blue,
+                        backgroundColor: Colors.blue.shade100,
                       ),
-                    ),
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          LinearProgressIndicator(
-                            value: _progressControllerRed.value,
-                            color: Colors.red,
-                            backgroundColor: Colors.red.shade100,
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.all(5.0),
-                            child: Center(
-                              child: Text('Symbol'),
-                            ),
-                          ),
-                        ],
+                      const Padding(
+                        padding: EdgeInsets.all(5.0),
+                        child: Center(
+                            child: Text('Timer for the difference between two numbers'),
+                        ),
                       ),
-                    ),
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          LinearProgressIndicator(
-                            value: _progressControllerPurple.value,
-                            color: Colors.purple,
-                            backgroundColor: Colors.purple.shade100,
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.all(5.0),
-                            child: Center(
-                              child: Text('Last number'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 20),
-                if(_isCalculateClicked)
-                  Text(
-                  _spokenText.isEmpty
-                      ? 'Nothing was said' //TODO: Need to implement after valida api response
-                      : 'You said: $_spokenText',
-                  style: const TextStyle(fontSize: 24),
-                  textAlign: TextAlign.center,
-                ),
+                
+                // if(_isCalculateClicked)
+                //   Text(
+                //   _spokenText.isEmpty
+                //       ? 'Nothing was said' //TODO: Need to implement after valida api response
+                //       : 'You said: $_spokenText',
+                //   style: const TextStyle(fontSize: 24),
+                //   textAlign: TextAlign.center,
+                // ),
                 const SizedBox(height: 30),
                 ElevatedButton(
                   onPressed: () {
                     _speechUtils.stopRecording();
+                    _progressControllerBlue.stop();
                   },
                   style: ElevatedButton.styleFrom(
-                    primary: Colors.blue,
+                    backgroundColor: Colors.blue,
                     padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
-                    textStyle: const TextStyle(fontSize: 20),
+                    textStyle: const TextStyle(fontSize: 20, color: Colors.white),
                     side: _isCalculationInProgress ? const BorderSide(color: Colors.red, width: 3) : BorderSide.none,
                   ),
                   child: const Text('Calculate'),
                 ),
                 const SizedBox(height: 30),
                 Text(
-                  'Result: $_result',
+                  _result=='Error'
+                  ?'Error: Please try again' 
+                  : 'Result: $_result',
                   style: const TextStyle(fontSize: 24),
                   textAlign: TextAlign.center,
                 ),

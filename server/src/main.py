@@ -27,10 +27,11 @@ def calculate():
             os.makedirs(directory)
         
         # Save the file in the directory
-        file.save(os.path.join(directory, filename))
+        filepath = os.path.join(directory, filename)
+        file.save(filepath)
         print(f'File {filename} saved successfully')
 
-        answer = calculate_from_audio(os.path.join(directory, filename))
+        answer = calculate_from_audio(filepath)
 
         return {
             'answer': answer

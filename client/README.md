@@ -41,7 +41,7 @@ flutter build web --release #for Web
 - Voice input for mathematical calculations
 - User-friendly interface
 - Communication with a backend server for processing voice commands
-- Progress indicators for each part of the calculation (first number, operation, second number)
+- Progress indicators of 3 second for each part of the calculation 
 - We can control the recording and calulate button through 'Space' key.
 
 
