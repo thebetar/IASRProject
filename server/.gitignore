@@ -1,4 +1,5 @@
 .venv/lib
+.venv/lib64
 .venv/share
 
 src/tmp/*

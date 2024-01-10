@@ -1,8 +1,8 @@
+import os
 from flask import Flask, request
 from flask_cors import CORS
 from datetime import datetime
 from services.calculator import calculate_from_audio
-import os
 
 app = Flask(__name__)
 CORS(app)
@@ -14,7 +14,7 @@ def home():
 @app.route('/calculate', methods=['POST'])
 def calculate():
     file = request.files['file']
-    
+
     if file:
         # Generate a unique filename using the current timestamp
         filename = 'audio_' + datetime.now().strftime('%Y%m%d_%H%M%S') + '.wav'
