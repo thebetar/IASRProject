@@ -13,8 +13,8 @@ def home():
 
 @app.route('/calculate', methods=['POST'])
 def calculate():
-    print(request.files)
     file = request.files['file']
+    
     if file:
         # Generate a unique filename using the current timestamp
         filename = 'audio_' + datetime.now().strftime('%Y%m%d_%H%M%S') + '.wav'
