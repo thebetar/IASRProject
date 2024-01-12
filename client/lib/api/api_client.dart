@@ -30,4 +30,25 @@ class ApiClient {
       print('Failed to send audio: $e'); //TODO: Remove this line after debugging
     }
   }
+
+  void sendCorrectedTextToServer(String correctedText) {
+    try {
+      var formData = html.FormData();
+      formData.append('correctedText', correctedText);
+
+      var request = html.HttpRequest();
+      request.open('POST', 'http://localhost:5000/correctedText');
+      request.send(formData);
+
+      request.onLoadEnd.listen((event) {
+        if (request.status == 200) {
+          print('Corrected text sent successfully');
+        } else {
+          print('Failed to send corrected text: ${request.statusText}');
+        }
+      });
+    } catch (e) {
+      print('Failed to send corrected text: $e');
+    }
+  }
 }
