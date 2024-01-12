@@ -1,0 +1,14 @@
+seven
+zero
+minus
+three
+one
+eight
+five
+two
+four
+six
+times
+plus
+nine
+over

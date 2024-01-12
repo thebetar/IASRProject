@@ -90,8 +90,7 @@ def get_1d_features(y, sr = 8000, wanted_width = 5):
     return np.concatenate((polly_coeff, zero_cross, tone_vs_noise), axis=0)
 
 #Load whole set
-training_data_filepath = os.path.join(os.path.dirname(__file__), 'training_data.npz')
-labels, X_2d_train, X_2d_test, X_1d_train,  X_1d_test, y_train,y_test = np.load(training_data_filepath, allow_pickle=True).values()
+labels = open(os.path.join(os.path.dirname(__file__), 'labels.txt'), 'r').read().split('\n')
 
 # Define the missing variables
 height = 40
@@ -148,7 +147,12 @@ net = Net().to(device)
 net.load_state_dict(torch.load(model_filepath))
 net.eval()
 
+tmp_dir = os.path.join(os.path.dirname(__file__), '..', 'tmp')
+
 def break_audio(filepath):
+    if not os.path.isdir(tmp_dir):
+        os.mkdir(tmp_dir)
+
     filepaths = []
 
     clip, sr = librosa.load(filepath)
@@ -159,7 +163,7 @@ def break_audio(filepath):
     chunks = [clip[i:i + chunk_length] for i in range(0, len(clip), chunk_length)]
 
     for i, chunk in enumerate(chunks):
-        filename = os.path.join(os.path.dirname(__file__), '..', 'tmp', f"chunk{i}.wav")
+        filename = os.path.join(tmp_dir, f"chunk{i}.wav")
         wavfile.write(filename, sr, chunk)
         filepaths.append(filename)
 
@@ -173,12 +177,12 @@ def classify_audio(filepath):
     clip = librosa.util.normalize(clip)
     clip = get_voiced_parts(clip,8000)
     clip = add_preemphasis_filter(clip)
-    features = get_2d_features(clip, 8000)
-    features = torch.Tensor(features).view(-1,1,height,width)
-    features = features.to(device)
-    out = net(features)
+    features_2d = get_2d_features(clip, 8000)
+    features_2d = torch.Tensor(features_2d).view(-1,1,height,width).to(device)
+    features_1d = torch.Tensor(get_1d_features(clip, 8000))
+    features_1d = torch.unsqueeze(features_1d, dim = 0).to(device) #change the shape of the tensor
+    out = net(features_2d, features_1d)
     classification = torch.argmax(out)
-    print(labels[classification])
 
     return labels[classification]
 
@@ -234,18 +238,20 @@ def calculate_from_audio(filepath):
         for filepath in filepaths:
             results.append(classify_audio(filepath))
 
-        for result in results:
-            if result in OPERATORS:
+        for idx, result in enumerate(results):
+            if idx == 0:
+                calculation_str = calculation_str + label_to_char(result)
+            elif result in OPERATORS:
+                calculation_str = calculation_str + ' ' + label_to_char(result)
+            elif results[idx - 1] in OPERATORS:
                 calculation_str = calculation_str + ' ' + label_to_char(result)
             else:
                 calculation_str = calculation_str + label_to_char(result)
 
         try:
-            print(calculation_str)
-            print(eval(calculation_str))
-
             return "{} = {}".format(calculation_str, eval(calculation_str))
         except:
             return "EvalError: {}".format(calculation_str)
-    except:
+    except Exception as e:
+        print(f"[Calculate POST] {e}")
         return "Error"

@@ -20,7 +20,7 @@ def calculate():
         filename = 'audio_' + datetime.now().strftime('%Y%m%d_%H%M%S') + '.wav'
         
         # Directory where we want to save the files
-        directory = 'uploads'
+        directory = os.path.join(os.path.dirname(__file__), 'uploads')
         
         # Check if the directory exists, and if not, create it
         if not os.path.exists(directory):
@@ -29,7 +29,7 @@ def calculate():
         # Save the file in the directory
         filepath = os.path.join(directory, filename)
         file.save(filepath)
-        print(f'File {filename} saved successfully')
+        print(f'[Calculate POST] File {filename} saved successfully')
 
         answer = calculate_from_audio(filepath)
 

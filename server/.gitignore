@@ -3,6 +3,7 @@
 .venv/share
 
 src/tmp/*
+src/uploads/*
 client/uploads/*
 
 __pycache__
