@@ -13,34 +13,41 @@ def home():
 
 @app.route('/calculate', methods=['POST'])
 def calculate():
-    file = request.files['file']
+    try:
+        file = request.files['file']
 
-    if file:
-        # Generate a unique filename using the current timestamp
-        filename = 'audio_' + datetime.now().strftime('%Y%m%d_%H%M%S') + '.wav'
-        
-        # Directory where we want to save the files
-        directory = os.path.join(os.path.dirname(__file__), 'uploads')
-        
-        # Check if the directory exists, and if not, create it
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-        
-        # Save the file in the directory
-        filepath = os.path.join(directory, filename)
-        file.save(filepath)
-        print(f'[Calculate POST] File {filename} saved successfully')
+        if file:
+            # Generate a unique filename using the current timestamp
+            filename = 'audio_' + datetime.now().strftime('%Y%m%d_%H%M%S') + '.wav'
+            
+            # Directory where we want to save the files
+            directory = os.path.join(os.path.dirname(__file__), 'uploads')
+            
+            # Check if the directory exists, and if not, create it
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            
+            # Save the file in the directory
+            filepath = os.path.join(directory, filename)
+            file.save(filepath)
+            print(f'[Calculate POST] File {filename} saved successfully')
 
-        answer = calculate_from_audio(filepath)
+            answer = calculate_from_audio(filepath)
 
+            return {
+                'answer': answer
+            }
+        else:
+            return {
+                'message': 'No file uploaded',
+                'answer': None
+            }, 400
+    except Exception as e:
+        print(f'[Calculate POST] Error: {e}')
         return {
-            'answer': answer
-        }
-    else:
-        return {
-            'message': 'No file uploaded',
+            'message': 'Internal server error',
             'answer': None
-        }, 400
+        }, 500
 
 if __name__ == '__main__':
     app.run(debug=True, use_reloader=False)

@@ -1,5 +1,6 @@
 # pip install -r requirements.txt
 Flask==3.0.0
+Flask-Cors==4.0.0
 scipy==1.11.4
 librosa==0.10.1
 soundfile==0.12.1
