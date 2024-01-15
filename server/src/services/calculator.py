@@ -9,6 +9,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+import warnings
+warnings.filterwarnings("ignore")
+
 def get_auto_correlation(clip, FRAME_SIZE = 100):
     bins = np.zeros(FRAME_SIZE)
     for i in range(0, FRAME_SIZE):
@@ -131,7 +134,7 @@ class Net(nn.Module):
         x = F.leaky_relu(self.fc1_bn(self.fc1(x)))
         x = self.fc2(x)
         return F.softmax(x, dim=1)
-
+"""
 if torch.cuda.is_available():
     device = torch.device("cuda:0")
     print("GPU")
@@ -140,7 +143,9 @@ else:
     print("CPU")
 
 os.environ['CUDA_VISIBLE_DEVICES']='2, 3'
-
+"""
+#this should be better for just forward runs of program
+device = torch.device("cpu")
 # Run the model over reduced data
 model_filepath = os.path.join(os.path.dirname(__file__), 'model.pth')
 net = Net().to(device)
@@ -184,6 +189,13 @@ def classify_audio(filepath):
     out = net(features_2d, features_1d)
     classification = torch.argmax(out)
 
+    #debug
+    out = out[0].detach().numpy()
+    debug_ind = out.argsort()[::-1].astype('int')
+    print("{}; {}".format(np.array(labels)[debug_ind][:3], np.around(out[debug_ind][:3], decimals=3)))
+
+    filename = os.path.join(tmp_dir, "clip{}.wav".format(os.path.basename(filepath)))
+    wavfile.write(filename, 8000, clip)
     return labels[classification]
 
 def label_to_char(label):
