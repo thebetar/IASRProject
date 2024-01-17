@@ -75,9 +75,6 @@ def get_2d_features(y, sr = 8000, wanted_width = 40):
     windows_size = len(y) // (wanted_width - 1)
     mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mels=20, n_fft=300, hop_length=windows_size, window='hamming')
     delta_mfcc = librosa.feature.delta(mfcc)
-    #normalisse mfcc using mean and std
-    mfcc = (mfcc - np.mean(mfcc)) / np.std(mfcc)
-    delta_mfcc = (delta_mfcc - np.mean(delta_mfcc)) / np.std(delta_mfcc)
 
     mfcc = np.concatenate((mfcc, delta_mfcc, ), axis=0)
     return mfcc
@@ -108,18 +105,20 @@ class Net(nn.Module):
         self.conv1 = nn.Conv2d(1, 8, 7)
         self.conv2 = nn.Conv2d(8, 16, 5)
         self.conv3 = nn.Conv2d(16, 32, 3)
+        self.conv3_bn = nn.BatchNorm2d(32)
 
         x = torch.randn(height,width).view(-1,1,height,width)
         self._to_linear = None
         self.convs(x)
 
         self.fc1 = nn.Linear(self._to_linear + number_of_linear_values, 256)
+        self.fc1_bn = nn.BatchNorm1d(256)
         self.fc2 = nn.Linear(256, number_of_classes) # Adjusted to match the number of classes
 
     def convs(self, x):
         x = F.max_pool2d(F.leaky_relu(self.conv1(x)), (2,2))
         x = F.max_pool2d(F.leaky_relu(self.conv2(x)), (2, 2))
-        x = F.max_pool2d(F.leaky_relu(self.conv3(x)), (2, 2))
+        x = F.max_pool2d(F.leaky_relu(self.conv3_bn(self.conv3(x))), (2, 2))
 
         if self._to_linear is None:
             self._to_linear = x[0].shape[0]*x[0].shape[1]*x[0].shape[2]
@@ -130,7 +129,7 @@ class Net(nn.Module):
         #now new data is added to linear layers
         data_2d = data_2d.view(-1, self._to_linear)
         x = torch.cat((data_2d , data_1d), dim=1)
-        x = F.leaky_relu(self.fc1(x))
+        x = F.leaky_relu(self.fc1_bn(self.fc1(x)))
         x = self.fc2(x)
         return F.softmax(x, dim=1)
 
@@ -146,7 +145,7 @@ else:
 os.environ['CUDA_VISIBLE_DEVICES']='2, 3'
 """
 # Run the model over reduced data
-model_filepath = os.path.join(os.path.dirname(__file__), 'model_2.pt')
+model_filepath = os.path.join(os.path.dirname(__file__), 'model.pth')
 net = Net().to(device)
 net.load_state_dict(torch.load(model_filepath))
 net.eval()
