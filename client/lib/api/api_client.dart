@@ -22,6 +22,7 @@ class ApiClient {
           var jsonResponse = convert.jsonDecode(serverResponse);
           String result = jsonResponse['answer']; // Extract the "answer" field
           updateResult(result);
+          print('Server response: $result');//TODO: Remove this line after debugging
         } else {
           print('Failed to send audio: ${request.statusText}');
         }

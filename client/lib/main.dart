@@ -198,7 +198,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 ),
                 const SizedBox(height: 30),
                 Text(
-                  _result=='Error'
+                  _result.contains('Error')
                   ?'Error: Please try again' 
                   : 'Result: $_result',
                   style: const TextStyle(fontSize: 24),
