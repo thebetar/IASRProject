@@ -22,6 +22,6 @@ Commit linting is done with Husky.js to install project properly run `npm instal
 | Make flask web server that can run the model | All    | 2023-01-01 | [x]  |
 | Add improved model to flask web server       | Lars   | 2023-01-07 | [ ]  |
 | Add monorepo to all branches                 | All    | 2023-01-07 | [ ]  |
-| Finish frontend prototype                    | Aditya | 2023-01-07 | [ ]  |
+| Finish frontend prototype                    | Aditya | 2023-01-07 | [x]  |
 | Optimise accuracy                            | All    | 2024-01-14 | [ ]  |
 | Write report                                 | All    | 2024-01-21 | [ ]  |
