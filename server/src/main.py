@@ -1,8 +1,9 @@
 import os
+import shutil
 from flask import Flask, request
 from flask_cors import CORS
 from datetime import datetime
-from services.calculator import calculate_from_audio
+from services.calculator import calculate_from_audio, char_to_label
 
 app = Flask(__name__)
 CORS(app)
@@ -49,11 +50,32 @@ def calculate():
             'answer': None
         }, 500
 
+ALLOWED_CHARS = [
+    '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '+', '-', '/', '*'
+]
+
 @app.route('/correctedText', methods=['POST'])
 def corrected_text():
     corrected_text = request.form['correctedText']
     print(f'Received corrected text: {corrected_text}')
-    # TODO: Process the corrected text as needed
+
+    chars = [char for char in list(corrected_text) if char in ALLOWED_CHARS]
+
+    for idx, char in enumerate(chars):
+        label = char_to_label(char)
+        
+        chunk_filepath = os.path.join(os.path.dirname(__file__), 'tmp', f'chunk{idx}.wav')
+
+        output_dir = os.path.join(os.path.dirname(__file__), '..', 'data', label)
+
+        if not os.path.isdir(output_dir):
+            os.makedirs(output_dir)
+
+        output_filename = 'audio_' + datetime.now().strftime('%Y%m%d_%H%M%S') + '.wav'
+        output_filepath = os.path.join(output_dir, output_filename)
+
+        shutil.copyfile(chunk_filepath, output_filepath)
+
     return {
         'message': 'Corrected text received successfully'
     }

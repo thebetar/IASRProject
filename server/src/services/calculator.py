@@ -147,7 +147,7 @@ os.environ['CUDA_VISIBLE_DEVICES']='2, 3'
 # Run the model over reduced data
 model_filepath = os.path.join(os.path.dirname(__file__), 'model.pth')
 net = Net().to(device)
-net.load_state_dict(torch.load(model_filepath))
+net.load_state_dict(torch.load(model_filepath, map_location=device))
 net.eval()
 
 tmp_dir = os.path.join(os.path.dirname(__file__), '..', 'tmp')
@@ -226,6 +226,36 @@ def label_to_char(label):
         return "/"
     elif label == "over":
         return "/"
+    
+def char_to_label(char):
+    if char == "1":
+        return "one"
+    elif char == "2":
+        return "two"
+    elif char == "3":
+        return "three"
+    elif char == "4":
+        return "four"
+    elif char == "5":
+        return "five"
+    elif char == "6":
+        return "six"
+    elif char == "7":
+        return "seven"
+    elif char == "8":
+        return "eight"
+    elif char == "9":
+        return "nine"
+    elif char == "0":
+        return "zero"
+    elif char == "+":
+        return "plus"
+    elif char == "-":
+        return "minus"
+    elif char == "*":
+        return "times"
+    elif char == "/":
+        return "over"
 
 OPERATORS = [
     "plus",
