@@ -49,5 +49,14 @@ def calculate():
             'answer': None
         }, 500
 
+@app.route('/correctedText', methods=['POST'])
+def corrected_text():
+    corrected_text = request.form['correctedText']
+    print(f'Received corrected text: {corrected_text}')
+    # TODO: Process the corrected text as needed
+    return {
+        'message': 'Corrected text received successfully'
+    }
+
 if __name__ == '__main__':
     app.run(debug=True, use_reloader=False)
