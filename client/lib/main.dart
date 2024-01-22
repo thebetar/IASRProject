@@ -16,8 +16,9 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Voice Calculator',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.blueGrey,
         brightness: Brightness.dark,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: const MyHomePage(),
     );
@@ -159,10 +160,17 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     },
                     backgroundColor: Colors.blue,
                     shape: _isMicHighlighted
-                        ? const RoundedRectangleBorder(
-                            side: BorderSide(color: Colors.red, width: 3))
-                        : null,
-                    child: const Icon(Icons.mic),
+                        ? RoundedRectangleBorder(
+                            side: BorderSide(color: Colors.red, width: 3),
+                            borderRadius: BorderRadius.circular(50),
+                          )
+                        : RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                    child: Icon(
+                      Icons.mic,
+                      color: _isMicHighlighted ? Colors.red : Colors.white,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   Text(
@@ -210,6 +218,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                         },
                         style: ElevatedButton.styleFrom(
                           textStyle: const TextStyle(fontSize: 13),
+                          foregroundColor: Colors.white,
                         ),
                         child: const Text('Fix the Response'),
                       ),
@@ -246,7 +255,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blue,
-                                textStyle: const TextStyle(color: Colors.white),
+                                foregroundColor: Colors.white,
                               ),
                               child: const Text('Send Corrected Text'),
                             ),
@@ -267,6 +276,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                           horizontal: 50, vertical: 20),
                       textStyle:
                           const TextStyle(fontSize: 20, color: Colors.white),
+                          foregroundColor: Colors.white,
                       side: _isCalculationInProgress
                           ? const BorderSide(color: Colors.red, width: 3)
                           : BorderSide.none,
