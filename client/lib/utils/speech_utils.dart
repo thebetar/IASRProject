@@ -65,6 +65,8 @@ class SpeechUtils {
 
         _apiClient.sendAudioToServer(audioBlob);
 
+        _audioChunks.clear();
+
         _isRecording = false;
       });
 
