@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:html' as html;
+import 'package:flutter/material.dart';
 import '../api/api_client.dart';
 
 class SpeechUtils {
@@ -9,14 +10,13 @@ class SpeechUtils {
   String _countDownText = '';
   html.MediaRecorder? _mediaRecorder;
   List<html.Blob> _audioChunks = [];
-  bool _isRecording = false;
   int _start = 5;
   Timer? _timer;
   late final ApiClient _apiClient;
+  final BuildContext context;
 
-  SpeechUtils({required this.updateCountDown, required this.updateResult, required this.startAnimation}) {
-    _apiClient = ApiClient(updateResult);
-  }
+
+  SpeechUtils(this._apiClient, this.context, {required this.updateCountDown, required this.updateResult, required this.startAnimation});
 
   Future<void> startRecording() async {
     try {
@@ -42,7 +42,6 @@ class SpeechUtils {
             }
           });
 
-          _isRecording = true;
         } else {
           _start--;
           _countDownText = '$_start';
@@ -67,7 +66,6 @@ class SpeechUtils {
 
         _audioChunks.clear();
 
-        _isRecording = false;
       });
 
       _mediaRecorder!.stop();

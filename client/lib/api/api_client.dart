@@ -1,10 +1,22 @@
 import 'dart:html' as html;
 import 'dart:convert' as convert;
+import 'package:flutter/material.dart';
 
 class ApiClient {
   final Function(String) updateResult;
+  final BuildContext context;
 
-  ApiClient(this.updateResult);
+  ApiClient(this.updateResult, this.context);
+
+  // Show the scafold message
+  void showSnackBar({required String message}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
   void sendAudioToServer(html.Blob audioBlob) {
     try {
@@ -17,18 +29,17 @@ class ApiClient {
 
       request.onLoadEnd.listen((event) {
         if (request.status == 200) {
-          print('Audio sent successfully');
+          showSnackBar(message: 'Audio sent successfully');
           String serverResponse = request.responseText!;
           var jsonResponse = convert.jsonDecode(serverResponse);
           String result = jsonResponse['answer']; // Extract the "answer" field
           updateResult(result);
           print('Server response: $result');//TODO: Remove this line after debugging
         } else {
-          print('Failed to send audio: ${request.statusText}');
-        }
+        }showSnackBar(message: 'Failed to send audio: ${request.statusText}');
       });
     } catch (e) {
-      print('Failed to send audio: $e'); //TODO: Remove this line after debugging
+      showSnackBar(message: 'Error on voice: $e');
     }
   }
 
@@ -43,13 +54,13 @@ class ApiClient {
 
       request.onLoadEnd.listen((event) {
         if (request.status == 200) {
-          print('Corrected text sent successfully');
+          showSnackBar(message: 'Corrected text sent successfully');
         } else {
-          print('Failed to send corrected text: ${request.statusText}');
+          showSnackBar(message: 'Failed to send corrected text: ${request.statusText}');
         }
       });
     } catch (e) {
-      print('Failed to send corrected text: $e');
+      showSnackBar(message: 'Error on corrected text: $e');
     }
   }
 }

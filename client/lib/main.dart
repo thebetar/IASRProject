@@ -43,18 +43,21 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   bool _isFirstPress = true;
   bool _isMicHighlighted = false;
   bool _isCalculationInProgress = false;
-  bool _isCalculateClicked = false;
   bool _isVisible = false;
   late ApiClient _apiClient;
-
+  
 
   @override
   void initState() {
     super.initState();
-    _apiClient = ApiClient((result) {
+    _apiClient = ApiClient((resultFromServer) {
       // Handle the result here
-      print(result);
-    });
+      setState(() {
+        _result = resultFromServer;
+        _spokenText = resultFromServer;
+        _spokenText = _spokenText.split('=')[0];
+      });
+    }, context);
     _progressControllerBlue = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
@@ -74,6 +77,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         setState(() {});
       });
     _speechUtils = SpeechUtils(
+      _apiClient,
+      context,
       updateCountDown: (countDownText) {
         setState(() {
           _countDownText = countDownText;
@@ -91,8 +96,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     );
   }
 
-  
-
   @override
   void dispose() {
     _progressControllerBlue.dispose();
@@ -103,6 +106,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
     return FocusableActionDetector(
       autofocus: true,
       shortcuts: {
@@ -123,6 +127,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             }
             _isFirstPress = !_isFirstPress;
             setState(() {});
+            return null;
           },
         ),
       },
@@ -148,16 +153,15 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     onPressed: () {
                       setState(() {
                         _result = '';
+                        _spokenText = '';
                       });
                       _speechUtils.startRecording();
                     },
                     backgroundColor: Colors.blue,
-                    shape: _isMicHighlighted 
-                      ? const RoundedRectangleBorder(
-                        side: BorderSide(
-                          color: Colors.red,
-                           width: 3)) 
-                      : null,
+                    shape: _isMicHighlighted
+                        ? const RoundedRectangleBorder(
+                            side: BorderSide(color: Colors.red, width: 3))
+                        : null,
                     child: const Icon(Icons.mic),
                   ),
                   const SizedBox(height: 10),
@@ -170,6 +174,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                   const SizedBox(height: 10),
                   Container(
                     height: 50,
+                    width: screenWidth * 0.8,
                     child: Stack(
                       children: [
                         LinearProgressIndicator(
@@ -180,57 +185,76 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                         const Padding(
                           padding: EdgeInsets.all(5.0),
                           child: Center(
-                              child: Text('Timer for the difference between two numbers'),
+                            child: Text(
+                                'Timer for the difference between two numbers'),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  
-                  Column(children: [
-                    Text(
-                    _spokenText.isEmpty
-                        ? 'Nothing was said' //TODO: Need to implement after valida api response
-                        : 'You said: $_spokenText',
-                    style: const TextStyle(fontSize: 24),
-                    textAlign: TextAlign.center,
-                  ),
-                // Add a new button that toggles the visibility
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _isVisible = !_isVisible;
-                    });
-                  },
-                  child: const Text('Fix the Response'),
-                ),
-                Visibility(
-                  visible: _isVisible,
-                  child: Column(
-                    children: <Widget>[
-                      TextField(
-                        controller: _textEditingController,
-                        decoration: const InputDecoration(
-                          labelText: 'Correct the spoken text',
-                        ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'[0-9\+\-\*\/\(\)\s]')),
-                          LengthLimitingTextInputFormatter(10),
-                        ],
+                  Column(
+                    children: [
+                      Text(
+                        _spokenText.isEmpty
+                            ? 'Nothing was said'
+                            : 'You said: $_spokenText',
+                        style: const TextStyle(fontSize: 24),
+                        textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 10),
+                      // Add a new button that toggles the visibility
                       ElevatedButton(
                         onPressed: () {
-                          String correctedText = _textEditingController.text;
-                          _apiClient.sendCorrectedTextToServer(correctedText);
+                          setState(() {
+                            _isVisible = !_isVisible;
+                          });
                         },
-                        child: const Text('Send Corrected Text'),
+                        style: ElevatedButton.styleFrom(
+                          textStyle: const TextStyle(fontSize: 13),
+                        ),
+                        child: const Text('Fix the Response'),
+                      ),
+                      Visibility(
+                        visible: _isVisible,
+                        child: Column(
+                          children: <Widget>[
+                            Container(
+                              width: screenWidth *0.5,
+                              child: TextField(
+                                controller: _textEditingController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Correct the spoken text',
+                                ),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(
+                                      RegExp(r'[0-9\+\-\*\/\(\)\s]')),
+                                  LengthLimitingTextInputFormatter(10),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            ElevatedButton(
+                              onPressed: () {
+                                String correctedText =
+                                    _textEditingController.text;
+                                _apiClient
+                                    .sendCorrectedTextToServer(correctedText);
+                                _textEditingController.clear();
+                                correctedText = '';
+                                setState(() {
+                                  _isVisible = !_isVisible;
+                                });
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                textStyle: const TextStyle(color: Colors.white),
+                              ),
+                              child: const Text('Send Corrected Text'),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                ),
-              
-                  ],),
                   const SizedBox(height: 30),
                   ElevatedButton(
                     onPressed: () {
@@ -239,17 +263,21 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
-                      padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
-                      textStyle: const TextStyle(fontSize: 20, color: Colors.white),
-                      side: _isCalculationInProgress ? const BorderSide(color: Colors.red, width: 3) : BorderSide.none,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 50, vertical: 20),
+                      textStyle:
+                          const TextStyle(fontSize: 20, color: Colors.white),
+                      side: _isCalculationInProgress
+                          ? const BorderSide(color: Colors.red, width: 3)
+                          : BorderSide.none,
                     ),
                     child: const Text('Calculate'),
                   ),
                   const SizedBox(height: 30),
                   Text(
-                    _result=='Error'
-                    ?'Error: Please try again' 
-                    : 'Result: $_result',
+                    _result == 'Error'
+                        ? 'Error: Please try again'
+                        : 'Result: $_result',
                     style: const TextStyle(fontSize: 24),
                     textAlign: TextAlign.center,
                   ),
