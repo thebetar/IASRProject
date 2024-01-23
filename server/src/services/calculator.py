@@ -169,7 +169,7 @@ net.load_state_dict(torch.load(model_filepath, map_location=device))
 net.eval()
 
 tmp_dir = os.path.join(os.path.dirname(__file__), '..', 'tmp')
-
+#break audio in small 3s segments
 def break_audio(filepath):
     if not os.path.isdir(tmp_dir):
         os.mkdir(tmp_dir)
