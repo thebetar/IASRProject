@@ -160,7 +160,7 @@ device = torch.device("cpu")
 #os.environ['CUDA_VISIBLE_DEVICES']='2, 3'
 
 # Run the model over reduced data
-model_filepath = os.path.join(os.path.dirname(__file__), 'model_new.pth')
+model_filepath = os.path.join(os.path.dirname(__file__), 'model.pth')
 #initiate model
 net = Net().to(device)
 #load the weights
