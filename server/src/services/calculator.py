@@ -79,7 +79,7 @@ def get_2d_features(y, sr = 8000, wanted_width = 40):
     mfcc = np.concatenate((mfcc, delta_mfcc, ), axis=0)
     return mfcc
 
-def get_1d_features(y, sr = 8000, wanted_width = 5):
+def get_1d_features(y, sr = 8000, wanted_width = 15):
     windows_size = len(y)//(wanted_width - 1)
     #coeffients of polynomial fitting frequency information over time
     polly_coeff = librosa.feature.poly_features(y=y, sr=sr, order=0, n_fft=1024, hop_length=windows_size, window='hamming')[0]
@@ -94,31 +94,44 @@ def get_1d_features(y, sr = 8000, wanted_width = 5):
 labels = open(os.path.join(os.path.dirname(__file__), 'labels.txt'), 'r').read().split('\n')
 
 # Define the missing variables
+# Define the missing variables
 height = 40
 width = 40
-number_of_linear_values = 15
+number_of_linear_values = 45
 number_of_classes = len(labels)
 
 class Net(nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv1 = nn.Conv2d(1, 8, 7)
-        self.conv2 = nn.Conv2d(8, 16, 5)
-        self.conv3 = nn.Conv2d(16, 32, 3)
-        self.conv3_bn = nn.BatchNorm2d(32)
+        self.conv1 = nn.Conv2d(1, 20, 3, padding=1)
+        self.conv2 = nn.Conv2d(20, 30, 3, padding=1)
+        self.conv3 = nn.Conv2d(30, 40, 3, padding=1)
+        self.conv4 = nn.Conv2d(40, 50, 3, padding=1)
+
+        self.conv1_bn = nn.BatchNorm2d(1)
+        self.conv2_bn = nn.BatchNorm2d(20)
+        self.conv3_bn = nn.BatchNorm2d(30)
+        self.conv4_bn = nn.BatchNorm2d(40)
+        self.dropoutcovn1 = nn.Dropout(0.1)
 
         x = torch.randn(height,width).view(-1,1,height,width)
         self._to_linear = None
         self.convs(x)
 
         self.fc1 = nn.Linear(self._to_linear + number_of_linear_values, 256)
-        self.fc1_bn = nn.BatchNorm1d(256)
-        self.fc2 = nn.Linear(256, number_of_classes) # Adjusted to match the number of classes
-
+        self.fc2 = nn.Linear(256, 128)
+        self.fc3 = nn.Linear(128, number_of_classes) # Adjusted to match the number of classes
+        self.dropoutfc1 = nn.Dropout(0.1)
     def convs(self, x):
-        x = F.max_pool2d(F.leaky_relu(self.conv1(x)), (2,2))
-        x = F.max_pool2d(F.leaky_relu(self.conv2(x)), (2, 2))
-        x = F.max_pool2d(F.leaky_relu(self.conv3_bn(self.conv3(x))), (2, 2))
+        x = self.dropoutcovn1(x)
+        x = self.conv1_bn(x)
+        x = F.max_pool2d(F.relu(self.conv1(x)), (2,2))
+        x = self.conv2_bn(x)
+        x = F.max_pool2d(F.relu(self.conv2(x)), (2,2))
+        x = self.conv3_bn(x)
+        x = F.max_pool2d(F.relu(self.conv3(x)), (2,2))
+        x = self.conv4_bn(x)
+        x = F.max_pool2d(F.relu(self.conv4(x)), (2,2))
 
         if self._to_linear is None:
             self._to_linear = x[0].shape[0]*x[0].shape[1]*x[0].shape[2]
@@ -129,25 +142,30 @@ class Net(nn.Module):
         #now new data is added to linear layers
         data_2d = data_2d.view(-1, self._to_linear)
         x = torch.cat((data_2d , data_1d), dim=1)
-        x = F.leaky_relu(self.fc1_bn(self.fc1(x)))
-        x = self.fc2(x)
+        x = F.relu(self.fc1(x))
+        x = self.dropoutfc1(x)
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
         return F.softmax(x, dim=1)
 
-device = torch.device("cpu")
-"""
-if torch.cuda.is_available():
-    device = torch.device("cuda:0")
-    print("GPU")
-else:
-    device = torch.device("cpu")
-    print("CPU")
 
-os.environ['CUDA_VISIBLE_DEVICES']='2, 3'
-"""
+device = torch.device("cpu")
+# Code to run on GPU nlot needed
+#if torch.cuda.is_available():
+#    device = torch.device("cuda:0")
+#    print("GPU")
+#else:
+#    device = torch.device("cpu")
+#    print("CPU")
+#os.environ['CUDA_VISIBLE_DEVICES']='2, 3'
+
 # Run the model over reduced data
-model_filepath = os.path.join(os.path.dirname(__file__), 'model.pth')
+model_filepath = os.path.join(os.path.dirname(__file__), 'model_new.pth')
+#initiate model
 net = Net().to(device)
+#load the weights
 net.load_state_dict(torch.load(model_filepath, map_location=device))
+#set on evalutation mode - no batch normalization
 net.eval()
 
 tmp_dir = os.path.join(os.path.dirname(__file__), '..', 'tmp')
@@ -174,24 +192,25 @@ def break_audio(filepath):
 
 def classify_audio(filepath):
     # Read new data and classify
-    clip, sr = librosa.load(filepath)
-    clip = librosa.resample(clip, orig_sr=sr, target_sr=8000)
-    clip = librosa.to_mono(clip)
-    clip = librosa.util.normalize(clip)
-    clip = get_voiced_parts(clip,8000)
-    clip = add_preemphasis_filter(clip)
-    features_2d = get_2d_features(clip, 8000)
-    features_2d = torch.Tensor(features_2d).view(-1,1,height,width).to(device)
-    features_1d = torch.Tensor(get_1d_features(clip, 8000))
-    features_1d = torch.unsqueeze(features_1d, dim = 0).to(device) #change the shape of the tensor
-    out = net(features_2d, features_1d)
-    classification = torch.argmax(out)
+    with torch.no_grad():
+        clip, sr = librosa.load(filepath)
+        clip = librosa.resample(clip, orig_sr=sr, target_sr=8000)
+        clip = librosa.to_mono(clip)
+        clip = librosa.util.normalize(clip)
+        clip = get_voiced_parts(clip,8000)
+        clip = add_preemphasis_filter(clip)
+        features_2d = get_2d_features(clip, 8000)
+        features_2d = torch.Tensor(features_2d).view(-1,1,height,width).to(device)
+        features_1d = torch.Tensor(get_1d_features(clip, 8000))
+        features_1d = torch.unsqueeze(features_1d, dim = 0).to(device) #change the shape of the tensor
+        out = net(features_2d, features_1d)
+        classification = torch.argmax(out)
 
-    out = out[0].detach().cpu().numpy()
-    debug_ind = out.argsort()[::-1].astype('int')
-    print("{}; {}".format(np.array(labels)[debug_ind][:3], np.around(out[debug_ind][:3], decimals=3)))
+        out = out[0].detach().cpu().numpy()
+        debug_ind = out.argsort()[::-1].astype('int')
+        print("{}; {}".format(np.array(labels)[debug_ind][:3], np.around(out[debug_ind][:3], decimals=3)))
 
-    return labels[classification]
+        return labels[classification]
 
 def label_to_char(label):
     if label == "one":
